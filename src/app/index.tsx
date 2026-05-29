@@ -23,6 +23,7 @@ import { BlurView, BlurTargetView } from "expo-blur";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
+import { router } from "expo-router";
 import type { Note } from "@/services/notes";
 
 const BASE_BG = "#fff";
@@ -45,13 +46,8 @@ export default function Index() {
         removeCollection,
     } = useNotes();
 
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [noteCollectionId, setNoteCollectionId] = useState<string | null>(null);
-    const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
     const [promptVisible, setPromptVisible] = useState(false);
     const [promptValue, setPromptValue] = useState("");
     const [promptAction, setPromptAction] = useState<"create" | null>(null);
@@ -83,11 +79,6 @@ export default function Index() {
         SystemUI.setBackgroundColorAsync(BASE_BG);
     }, []);
 
-    // Sync note collection picker with selected collection
-    useEffect(() => {
-        setNoteCollectionId(selectedCollectionId);
-    }, [selectedCollectionId]);
-
     if (authLoading) {
         return (
             <SafeAreaView style={styles.centerContainer}>
@@ -116,29 +107,6 @@ export default function Index() {
     const selectedCollectionName = selectedCollectionId
         ? (collections.find((c) => c.id === selectedCollectionId)?.name ?? "")
         : "All Notes";
-
-    const handleAddNote = async () => {
-        const trimmedTitle = title.trim();
-        const trimmedContent = content.trim();
-
-        if (!trimmedTitle && !trimmedContent) {
-            Alert.alert("Empty note", "Please enter a title or content.");
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            await addNote(trimmedTitle || "Untitled", trimmedContent || "", noteCollectionId);
-            setTitle("");
-            setContent("");
-        } catch (error) {
-            Alert.alert("Error", "Failed to save note.");
-            console.error(error);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     const handleDeleteNote = (note: Note) => {
         Alert.alert("Delete note", `Delete "${note.title}"?`, [
             { text: "Cancel", style: "cancel" },
@@ -306,55 +274,18 @@ export default function Index() {
                                     />
                                 ) : (
                                     <Text style={styles.emptyText}>
-                                        No notes yet. Create one below!
+                                        No notes yet. Tap + to create one!
                                     </Text>
                                 )
                             }
                         />
 
-                        {/* Add note form */}
-                        <View style={styles.form}>
-                            <View style={styles.formRow}>
-                                <TextInput
-                                    style={styles.titleInput}
-                                    placeholder="Note title"
-                                    placeholderTextColor="#999"
-                                    value={title}
-                                    onChangeText={setTitle}
-                                />
-                                <TouchableOpacity
-                                    style={styles.collectionPicker}
-                                    onPress={() => setCollectionPickerOpen(true)}
-                                >
-                                    <Text style={styles.collectionPickerText}>
-                                        {noteCollectionId
-                                            ? (collections.find((c) => c.id === noteCollectionId)
-                                                  ?.name ?? "…")
-                                            : "None"}
-                                    </Text>
-                                    <Text style={styles.collectionPickerArrow}>▾</Text>
-                                </TouchableOpacity>
-                            </View>
-                            <TextInput
-                                style={styles.contentInput}
-                                placeholder="Write something..."
-                                placeholderTextColor="#999"
-                                value={content}
-                                onChangeText={setContent}
-                                multiline
-                            />
-                            <TouchableOpacity
-                                style={[styles.addButton, isSaving && styles.addButtonDisabled]}
-                                onPress={handleAddNote}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <ActivityIndicator size="small" color="#fff" />
-                                ) : (
-                                    <Text style={styles.addButtonText}>Save Note</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity
+                            style={styles.fab}
+                            onPress={() => router.push("/new-note")}
+                        >
+                            <Text style={styles.fabText}>+</Text>
+                        </TouchableOpacity>
                     </KeyboardAvoidingView>
 
                     {/* Collection prompt modal */}
@@ -397,57 +328,6 @@ export default function Index() {
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
-                            </View>
-                        </Pressable>
-                    </Modal>
-
-                    {/* Collection picker modal */}
-                    <Modal
-                        visible={collectionPickerOpen}
-                        transparent
-                        animationType="fade"
-                        onRequestClose={() => setCollectionPickerOpen(false)}
-                    >
-                        <Pressable
-                            style={styles.pickerOverlay}
-                            onPress={() => setCollectionPickerOpen(false)}
-                        >
-                            <View style={styles.pickerContainer}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.pickerItem,
-                                        !noteCollectionId && styles.pickerItemActive,
-                                    ]}
-                                    onPress={() => {
-                                        setNoteCollectionId(null);
-                                        setCollectionPickerOpen(false);
-                                    }}
-                                >
-                                    <Text style={styles.pickerItemText}>None</Text>
-                                </TouchableOpacity>
-                                {collections.map((c) => (
-                                    <TouchableOpacity
-                                        key={c.id}
-                                        style={[
-                                            styles.pickerItem,
-                                            noteCollectionId === c.id && styles.pickerItemActive,
-                                        ]}
-                                        onPress={() => {
-                                            setNoteCollectionId(c.id);
-                                            setCollectionPickerOpen(false);
-                                        }}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.pickerItemText,
-                                                noteCollectionId === c.id &&
-                                                    styles.pickerItemTextActive,
-                                            ]}
-                                        >
-                                            {c.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
                             </View>
                         </Pressable>
                     </Modal>
@@ -776,6 +656,27 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginTop: 40,
     },
+    fab: {
+        position: "absolute",
+        right: 20,
+        bottom: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: "#208AEF",
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    fabText: {
+        fontSize: 28,
+        color: "#fff",
+        lineHeight: 30,
+    },
     noteCard: {
         backgroundColor: "#f8f9fa",
         borderRadius: 10,
@@ -867,42 +768,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
-    // Collection picker
+    // Prompt modal
     pickerOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.3)",
         justifyContent: "center",
         alignItems: "center",
     },
-    pickerContainer: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        width: 220,
-        maxHeight: 300,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
-    },
-    pickerItem: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
-    },
-    pickerItemActive: {
-        backgroundColor: "#e8f4fd",
-    },
-    pickerItemText: {
-        fontSize: 15,
-        color: "#333",
-    },
-    pickerItemTextActive: {
-        color: "#208AEF",
-        fontWeight: "600",
-    },
-    // Prompt modal
     promptContainer: {
         backgroundColor: "#fff",
         borderRadius: 12,
