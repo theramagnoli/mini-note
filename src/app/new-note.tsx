@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
     Alert,
     ActivityIndicator,
     Modal,
@@ -16,6 +15,7 @@ import { NavigationBar } from "expo-navigation-bar";
 import { router } from "expo-router";
 import { CaretLeft, CaretDown, Check } from "phosphor-react-native";
 import { useNotes } from "@/contexts/NotesContext";
+import { styles } from "./new-note.styles";
 
 const FALLBACK_COLOR = "#999";
 
@@ -173,109 +173,3 @@ export default function NewNoteScreen() {
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#e0e0e0",
-    },
-    headerTitle: {
-        fontSize: 17,
-        fontWeight: "600",
-        color: "#333",
-    },
-    cancelText: {
-        fontSize: 16,
-        color: "#666",
-    },
-    saveText: {
-        fontSize: 16,
-        color: "#208AEF",
-        fontWeight: "600",
-    },
-    collectionRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        gap: 8,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
-    },
-    collectionLabel: {
-        flex: 1,
-        fontSize: 14,
-        color: "#999",
-    },
-    collectionLabelActive: {
-        color: "#208AEF",
-        fontWeight: "500",
-    },
-    titleInput: {
-        fontSize: 22,
-        fontWeight: "600",
-        color: "#333",
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 12,
-    },
-    contentInput: {
-        flex: 1,
-        fontSize: 16,
-        color: "#333",
-        paddingHorizontal: 20,
-        paddingTop: 12,
-        lineHeight: 24,
-    },
-    pickerOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    pickerContainer: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        width: 260,
-        maxHeight: 300,
-        overflow: "hidden",
-        paddingVertical: 4,
-        paddingHorizontal: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
-    },
-    pickerItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        gap: 10,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
-    },
-    pickerItemActive: {
-        backgroundColor: "#e8f4fd",
-        borderRadius: 8,
-    },
-    pickerItemText: {
-        flex: 1,
-        fontSize: 15,
-        color: "#333",
-    },
-    pickerItemTextActive: {
-        color: "#208AEF",
-        fontWeight: "600",
-    },
-});
