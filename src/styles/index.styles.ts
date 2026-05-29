@@ -174,28 +174,6 @@ export const styles = StyleSheet.create({
         color: "#fff",
         lineHeight: 30,
     },
-    emptyText: {
-        textAlign: "center",
-        color: "#999",
-        fontSize: 15,
-        marginTop: 40,
-    },
-    fab: {
-        position: "absolute",
-        right: 20,
-        bottom: 20,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: "#208AEF",
-        alignItems: "center",
-        justifyContent: "center",
-        elevation: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-    },
     // Prompt modal
     pickerOverlay: {
         flex: 1,

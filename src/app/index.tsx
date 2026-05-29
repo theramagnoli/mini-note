@@ -12,27 +12,24 @@ import {
     Modal,
     Pressable,
     Animated,
-    Dimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationBar } from "expo-navigation-bar";
 import * as SystemUI from "expo-system-ui";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurView, BlurTargetView } from "expo-blur";
+import { BlurTargetView } from "expo-blur";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
 import { router } from "expo-router";
 import { ListIcon, PlusIcon } from "phosphor-react-native";
 import { NoteCard } from "@/components/NoteCard";
-import { COLLECTION_COLORS } from "@/services/collectionColors";
+import { COLLECTION_COLORS, CollectionColor } from "@/services/collectionColors";
 import { Sidebar } from "@/components/Sidebar";
 import { styles } from "@/styles/index.styles";
 
 const BASE_BG = "#fff";
-const FALLBACK_COLOR = "#999";
 const HEADER_HEIGHT = 56;
-const AVATAR_SIZE = 32;
 const H_PADDING = 16;
 
 export default function Index() {
@@ -42,9 +39,6 @@ export default function Index() {
         isLoading: notesLoading,
         collections,
         selectedCollectionId,
-        selectCollection,
-        addNote,
-        removeNote,
         addCollection,
         editCollection,
         removeCollection,
@@ -58,7 +52,7 @@ export default function Index() {
     const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(
         null,
     );
-    const [selectedColor, setSelectedColor] = useState(COLLECTION_COLORS[0]);
+    const [selectedColor, setSelectedColor] = useState<CollectionColor>(COLLECTION_COLORS[0]);
     const sidebarAnim = useRef(new Animated.Value(0)).current;
     const blurTargetRef = useRef<View>(null);
     const insets = useSafeAreaInsets();
