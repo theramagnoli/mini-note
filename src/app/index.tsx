@@ -18,7 +18,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { NavigationBar } from "expo-navigation-bar";
 import * as SystemUI from "expo-system-ui";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView, BlurTargetView } from "expo-blur";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,9 @@ import { useNotes } from "@/contexts/NotesContext";
 import type { Note } from "@/services/notes";
 
 const BASE_BG = "#fff";
+const HEADER_HEIGHT = 56;
+const AVATAR_SIZE = 32;
+const H_PADDING = 16;
 
 export default function Index() {
     const { user, isLoading: authLoading, signIn, signOut } = useAuth();
@@ -57,6 +60,7 @@ export default function Index() {
     );
     const sidebarAnim = useRef(new Animated.Value(0)).current;
     const blurTargetRef = useRef<View>(null);
+    const insets = useSafeAreaInsets();
 
     const openSidebar = () => {
         setSidebarOpen(true);
@@ -105,6 +109,9 @@ export default function Index() {
             </SafeAreaView>
         );
     }
+
+    const menuTop = insets.top + HEADER_HEIGHT - 6;
+    const menuRight = H_PADDING - 6;
 
     const selectedCollectionName = selectedCollectionId
         ? (collections.find((c) => c.id === selectedCollectionId)?.name ?? "")
@@ -219,50 +226,40 @@ export default function Index() {
                 <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
                     <StatusBar style="dark" />
                     <NavigationBar style="dark" />
-
-                    {/* Contextual menu modal */}
-                    <Modal
-                        visible={menuVisible}
-                        transparent
-                        animationType="fade"
-                        onRequestClose={() => setMenuVisible(false)}
-                    >
-                        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+                    {menuVisible && (
+                        <Pressable
+                            style={[
+                                styles.menuOverlay,
+                                {
+                                    paddingTop: menuTop,
+                                    paddingRight: menuRight,
+                                },
+                            ]}
+                            onPress={() => setMenuVisible(false)}
+                        >
                             <View style={styles.menuContainer}>
-                                <View style={styles.menuHeader}>
-                                    {user.photo ? (
-                                        <Image
-                                            source={{ uri: user.photo }}
-                                            style={styles.menuAvatar}
-                                        />
-                                    ) : (
-                                        <View style={[styles.menuAvatar, styles.avatarPlaceholder]}>
-                                            <Text style={styles.menuAvatarText}>
-                                                {user.name?.charAt(0) ?? user.email.charAt(0)}
-                                            </Text>
-                                        </View>
-                                    )}
-                                    <View style={styles.menuInfo}>
-                                        <Text style={styles.menuName}>{user.name ?? "User"}</Text>
-                                        <Text style={styles.menuEmail}>{user.email}</Text>
-                                    </View>
+                                <View style={styles.menuInfo}>
+                                    <Text style={styles.menuName}>{user.name ?? "User"}</Text>
+                                    <Text style={styles.menuEmail}>{user.email}</Text>
                                 </View>
                                 <View style={styles.menuDivider} />
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={() => handleMenuAction("profile")}
-                                >
-                                    <Text style={styles.menuItemText}>Profile</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.menuItem}
-                                    onPress={() => handleMenuAction("signOut")}
-                                >
-                                    <Text style={styles.menuItemTextDanger}>Sign Out</Text>
-                                </TouchableOpacity>
+                                <View style={styles.menuActions}>
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() => handleMenuAction("profile")}
+                                    >
+                                        <Text style={styles.menuItemText}>Profile</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() => handleMenuAction("signOut")}
+                                    >
+                                        <Text style={styles.menuItemTextDanger}>Sign Out</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         </Pressable>
-                    </Modal>
+                    )}
 
                     <KeyboardAvoidingView
                         style={styles.inner}
@@ -704,12 +701,10 @@ const styles = StyleSheet.create({
     },
     // Contextual menu
     menuOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
+        ...StyleSheet.absoluteFill,
         justifyContent: "flex-start",
         alignItems: "flex-end",
-        paddingTop: 60,
-        paddingRight: 20,
+        zIndex: 50,
     },
     menuContainer: {
         backgroundColor: "#fff",
@@ -719,12 +714,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
-        elevation: 8,
-    },
-    menuHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 14,
+        elevation: 2,
     },
     menuAvatar: {
         width: 40,
@@ -737,8 +727,8 @@ const styles = StyleSheet.create({
         fontWeight: "700",
     },
     menuInfo: {
-        marginLeft: 12,
-        flex: 1,
+        padding: 16,
+        gap: 4,
     },
     menuName: {
         fontSize: 15,
@@ -754,10 +744,7 @@ const styles = StyleSheet.create({
         height: StyleSheet.hairlineWidth,
         backgroundColor: "#e0e0e0",
     },
-    menuItem: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-    },
+    menuItem: {},
     menuItemText: {
         fontSize: 15,
         color: "#333",
@@ -765,6 +752,11 @@ const styles = StyleSheet.create({
     menuItemTextDanger: {
         fontSize: 15,
         color: "#e74c3c",
+    },
+    menuActions: {
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        gap: 16,
     },
     // Notes list
     list: {
