@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
 import { router } from "expo-router";
 import { ListIcon, PlusIcon } from "phosphor-react-native";
+import { colors } from "../styles";
 import { NoteCard } from "@/components/NoteCard";
 import { COLLECTION_COLORS, CollectionColor } from "@/services/collectionColors";
 import { Sidebar } from "@/components/Sidebar";
@@ -82,7 +83,7 @@ export default function Index() {
         return (
             <SafeAreaView style={styles.centerContainer}>
                 <StatusBar style="dark" />
-                <ActivityIndicator size="large" color="#208AEF" />
+                <ActivityIndicator size="large" color={colors.primary} />
             </SafeAreaView>
         );
     }
@@ -209,7 +210,7 @@ export default function Index() {
                                 onPress={openSidebar}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <ListIcon size={22} color="#333" weight="bold" />
+                                <ListIcon size={22} color={colors.black} weight="bold" />
                             </TouchableOpacity>
                             <Image
                                 source={require("@/assets/mini-note-logo.png")}
@@ -243,7 +244,7 @@ export default function Index() {
                                 notesLoading ? (
                                     <ActivityIndicator
                                         size="large"
-                                        color="#208AEF"
+                                        color={colors.primary}
                                         style={styles.loader}
                                     />
                                 ) : (
@@ -258,7 +259,7 @@ export default function Index() {
                             style={styles.fab}
                             onPress={() => router.push("/new-note")}
                         >
-                            <PlusIcon size={28} color="#fff" weight="bold" />
+                            <PlusIcon size={22} color={colors.black} weight="bold" />
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
 
@@ -280,7 +281,7 @@ export default function Index() {
                                 <TextInput
                                     style={styles.promptInput}
                                     placeholder="Collection name"
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor={colors.placeholder}
                                     value={promptValue}
                                     onChangeText={setPromptValue}
                                     autoFocus

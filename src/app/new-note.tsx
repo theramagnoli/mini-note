@@ -4,20 +4,24 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    ScrollView,
     Alert,
     ActivityIndicator,
     Modal,
     Pressable,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { NavigationBar } from "expo-navigation-bar";
 import { router } from "expo-router";
-import { CaretLeft, CaretDown, Check } from "phosphor-react-native";
+import { CaretLeftIcon, CheckIcon } from "phosphor-react-native";
 import { useNotes } from "@/contexts/NotesContext";
 import { styles } from "@/styles/new-note.styles";
+import { colors } from "../styles";
 
-const FALLBACK_COLOR = "#999";
+const FALLBACK_COLOR = colors.fallback;
 
 export default function NewNoteScreen() {
     const { collections, selectedCollectionId, addNote } = useNotes();
@@ -56,57 +60,68 @@ export default function NewNoteScreen() {
             <NavigationBar style="dark" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.cancelText}>Cancel</Text>
+                    <CaretLeftIcon size={22} color={colors.black} weight="bold" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>New Note</Text>
                 <TouchableOpacity onPress={handleSave} disabled={isSaving}>
                     {isSaving ? (
-                        <ActivityIndicator size="small" color="#208AEF" />
+                        <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
-                        <Text style={styles.saveText}>Save</Text>
+                        <CheckIcon size={22} color={colors.black} weight="bold" />
                     )}
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.collectionRow} onPress={() => setPickerOpen(true)}>
-                <View
-                    style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: activeCollection
-                            ? activeCollection.color || "#999"
-                            : "#ccc",
-                    }}
-                />
-                <Text
-                    style={[
-                        styles.collectionLabel,
-                        activeCollection && styles.collectionLabelActive,
-                    ]}
+            <KeyboardAvoidingView
+                style={{ flex: 1, backgroundColor: colors.background }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+                <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    {activeCollection?.name ?? "No collection"}
-                </Text>
-                <CaretDown size={14} color="#999" />
-            </TouchableOpacity>
+                    <TextInput
+                        style={styles.titleInput}
+                        placeholder="Title"
+                        placeholderTextColor={colors.placeholder}
+                        value={title}
+                        onChangeText={setTitle}
+                        autoFocus
+                    />
+                    <TextInput
+                        style={styles.contentInput}
+                        placeholder="Write something..."
+                        placeholderTextColor={colors.placeholder}
+                        value={content}
+                        onChangeText={setContent}
+                        multiline
+                        textAlignVertical="top"
+                    />
+                </ScrollView>
 
-            <TextInput
-                style={styles.titleInput}
-                placeholder="Title"
-                placeholderTextColor="#999"
-                value={title}
-                onChangeText={setTitle}
-                autoFocus
-            />
-            <TextInput
-                style={styles.contentInput}
-                placeholder="Write something..."
-                placeholderTextColor="#999"
-                value={content}
-                onChangeText={setContent}
-                multiline
-                textAlignVertical="top"
-            />
+                <TouchableOpacity style={styles.collectionRow} onPress={() => setPickerOpen(true)}>
+                    <View
+                        style={[
+                            styles.collectionDot,
+                            styles.collectionDotBordered,
+                            {
+                                backgroundColor: activeCollection
+                                    ? activeCollection.color || colors.fallback
+                                    : colors.fallback,
+                            },
+                        ]}
+                    />
+                    <Text
+                        style={[
+                            styles.collectionLabel,
+                            activeCollection && styles.collectionLabelActive,
+                        ]}
+                    >
+                        {activeCollection?.name ?? "No collection"}
+                    </Text>
+                </TouchableOpacity>
+            </KeyboardAvoidingView>
 
             <Modal
                 visible={pickerOpen}
@@ -124,15 +139,12 @@ export default function NewNoteScreen() {
                             }}
                         >
                             <View
-                                style={{
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: 5,
-                                    backgroundColor: "#ccc",
-                                }}
+                                style={[styles.collectionDot, { backgroundColor: colors.fallback }]}
                             />
                             <Text style={styles.pickerItemText}>No collection</Text>
-                            {!collectionId && <Check size={18} color="#208AEF" weight="bold" />}
+                            {!collectionId && (
+                                <CheckIcon size={18} color={colors.black} weight="bold" />
+                            )}
                         </TouchableOpacity>
                         {collections.map((c) => (
                             <TouchableOpacity
@@ -147,12 +159,10 @@ export default function NewNoteScreen() {
                                 }}
                             >
                                 <View
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: 5,
-                                        backgroundColor: c.color || FALLBACK_COLOR,
-                                    }}
+                                    style={[
+                                        styles.collectionDot,
+                                        { backgroundColor: c.color || FALLBACK_COLOR },
+                                    ]}
                                 />
                                 <Text
                                     style={[
@@ -163,7 +173,7 @@ export default function NewNoteScreen() {
                                     {c.name}
                                 </Text>
                                 {collectionId === c.id && (
-                                    <Check size={18} color="#208AEF" weight="bold" />
+                                    <CheckIcon size={18} color={colors.black} weight="bold" />
                                 )}
                             </TouchableOpacity>
                         ))}

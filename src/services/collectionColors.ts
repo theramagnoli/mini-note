@@ -1,5 +1,5 @@
 export const COLLECTION_COLORS = [
-    "#208AEF",
+    "#B8860B",
     "#e74c3c",
     "#2ecc71",
     "#f39c12",

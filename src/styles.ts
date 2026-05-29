@@ -1,20 +1,7 @@
 import { StyleSheet } from "react-native";
+import { colors, radii } from "./styles/index.styles";
 
-export const colors = {
-    primary: "#208AEF",
-    danger: "#e74c3c",
-    text: "#333",
-    textSecondary: "#666",
-    textMuted: "#999",
-    border: "#e0e0e0",
-    borderLight: "#f0f0f0",
-    background: "#fff",
-    cardBackground: "#f8f9fa",
-    activeBackground: "#e8f4fd",
-    white: "#fff",
-    black: "#000",
-    fallback: "#ccc",
-} as const;
+export { colors, radii };
 
 export const sharedStyles = StyleSheet.create({
     fullScreenContainer: {
@@ -30,13 +17,13 @@ export const sharedStyles = StyleSheet.create({
     },
     overlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
+        backgroundColor: colors.overlay,
         justifyContent: "center",
         alignItems: "center",
     },
     card: {
         backgroundColor: colors.background,
-        borderRadius: 12,
+        borderRadius: radii.md,
         shadowColor: colors.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,

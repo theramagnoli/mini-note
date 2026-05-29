@@ -18,6 +18,7 @@ import { DotsThreeVertical } from "phosphor-react-native";
 import { useNotes } from "@/contexts/NotesContext";
 import { updateNote } from "@/services/notes";
 import { styles } from "@/styles/note/[id].styles";
+import { colors } from "../../styles";
 
 export default function NoteDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -70,7 +71,7 @@ export default function NoteDetailScreen() {
     if (!note) {
         return (
             <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-                <ActivityIndicator size="large" color="#208AEF" style={{ marginTop: 40 }} />
+                <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
             </SafeAreaView>
         );
     }
@@ -90,7 +91,7 @@ export default function NoteDetailScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Note</Text>
                 <TouchableOpacity onPress={() => setMenuOpen(true)}>
-                    <DotsThreeVertical size={22} color="#333" weight="bold" />
+                    <DotsThreeVertical size={22} color={colors.black} weight="bold" />
                 </TouchableOpacity>
             </View>
 
@@ -102,7 +103,7 @@ export default function NoteDetailScreen() {
                 <TextInput
                     style={styles.titleInput}
                     placeholder="Title"
-                    placeholderTextColor="#999"
+                    placeholderTextColor={colors.placeholder}
                     value={title}
                     onChangeText={setTitle}
                     onBlur={handleSave}
@@ -110,7 +111,7 @@ export default function NoteDetailScreen() {
                 <TextInput
                     style={styles.contentInput}
                     placeholder="Write something..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor={colors.placeholder}
                     value={content}
                     onChangeText={setContent}
                     multiline
@@ -118,7 +119,7 @@ export default function NoteDetailScreen() {
                     onBlur={handleSave}
                 />
                 {isSaving && (
-                    <ActivityIndicator size="small" color="#999" style={{ marginTop: 12 }} />
+                    <ActivityIndicator size="small" color={colors.text} style={{ marginTop: 12 }} />
                 )}
             </ScrollView>
 

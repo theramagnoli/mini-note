@@ -3,8 +3,9 @@ import { BlurView } from "expo-blur";
 import { PlusIcon } from "phosphor-react-native";
 import { useNotes } from "@/contexts/NotesContext";
 import { styles } from "./Sidebar.styles";
+import { colors } from "../styles";
 
-const FALLBACK_COLOR = "#999";
+const FALLBACK_COLOR = colors.fallback;
 
 interface SidebarProps {
     sidebarAnim: Animated.Value;
@@ -70,7 +71,7 @@ export function Sidebar({
                             right: 8,
                         }}
                     >
-                        <PlusIcon size={22} color="#208AEF" weight="bold" />
+                        <PlusIcon size={22} color={colors.black} weight="bold" />
                     </TouchableOpacity>
                 </View>
 
@@ -81,7 +82,7 @@ export function Sidebar({
                         onClose();
                     }}
                 >
-                    <View style={[styles.dot, { backgroundColor: "#ccc" }]} />
+                    <View style={[styles.dot, { backgroundColor: colors.fallback }]} />
                     <Text style={[styles.itemText, !selectedCollectionId && styles.itemTextActive]}>
                         All Notes
                     </Text>

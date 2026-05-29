@@ -1,9 +1,12 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
+import { colors, radii } from "../styles";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: "row",
@@ -12,71 +15,75 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#e0e0e0",
+        borderBottomColor: colors.border,
     },
     headerTitle: {
         fontSize: 17,
         fontWeight: "600",
-        color: "#333",
-    },
-    cancelText: {
-        fontSize: 16,
-        color: "#666",
-    },
-    saveText: {
-        fontSize: 16,
-        color: "#208AEF",
-        fontWeight: "600",
+        color: colors.text,
     },
     collectionRow: {
+        position: "absolute",
+        bottom: 12,
+        alignSelf: "center",
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingLeft: 8,
+        paddingRight: 12,
+        paddingVertical: 4,
         gap: 8,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
+        backgroundColor: "#F3F4F6",
+        borderRadius: radii.full,
     },
     collectionLabel: {
-        flex: 1,
-        fontSize: 14,
-        color: "#999",
+        fontSize: 16,
+        color: colors.text,
+        flexShrink: 1,
     },
     collectionLabelActive: {
-        color: "#208AEF",
+        color: colors.black,
         fontWeight: "500",
+    },
+    collectionDot: {
+        width: 16,
+        height: 16,
+        borderRadius: radii.full,
+    },
+    collectionDotBordered: {
+        borderWidth: 2,
+        borderColor: colors.black,
     },
     titleInput: {
         fontSize: 22,
         fontWeight: "600",
-        color: "#333",
+        color: colors.text,
+        backgroundColor: colors.background,
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 12,
     },
     contentInput: {
-        flex: 1,
         fontSize: 16,
-        color: "#333",
+        color: colors.text,
+        backgroundColor: colors.background,
         paddingHorizontal: 20,
-        paddingTop: 12,
         lineHeight: 24,
+        minHeight: SCREEN_HEIGHT * 0.5,
     },
     pickerOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
+        backgroundColor: colors.overlay,
         justifyContent: "center",
         alignItems: "center",
     },
     pickerContainer: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
+        backgroundColor: colors.background,
+        borderRadius: radii.md,
         width: 260,
-        maxHeight: 300,
         overflow: "hidden",
         paddingVertical: 4,
         paddingHorizontal: 4,
-        shadowColor: "#000",
+        shadowColor: colors.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
@@ -88,20 +95,18 @@ export const styles = StyleSheet.create({
         paddingVertical: 14,
         paddingHorizontal: 16,
         gap: 10,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
     },
     pickerItemActive: {
-        backgroundColor: "#e8f4fd",
-        borderRadius: 8,
+        backgroundColor: colors.activeBackground,
+        borderRadius: radii.sm,
     },
     pickerItemText: {
         flex: 1,
         fontSize: 15,
-        color: "#333",
+        color: colors.text,
     },
     pickerItemTextActive: {
-        color: "#208AEF",
+        color: colors.primary,
         fontWeight: "600",
     },
 });

@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
+import { colors, radii } from "../../styles";
 
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: "row",
@@ -12,16 +13,16 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#e0e0e0",
+        borderBottomColor: colors.border,
     },
     backText: {
         fontSize: 16,
-        color: "#666",
+        color: colors.text,
     },
     headerTitle: {
         fontSize: 17,
         fontWeight: "600",
-        color: "#333",
+        color: colors.text,
     },
     scrollContent: {
         padding: 20,
@@ -29,12 +30,12 @@ export const styles = StyleSheet.create({
     titleInput: {
         fontSize: 22,
         fontWeight: "600",
-        color: "#333",
+        color: colors.text,
         paddingBottom: 12,
     },
     contentInput: {
         fontSize: 16,
-        color: "#333",
+        color: colors.text,
         lineHeight: 24,
         minHeight: 200,
     },
@@ -46,34 +47,34 @@ export const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 13,
-        color: "#999",
+        color: colors.text,
     },
     dot: {
         width: 4,
         height: 4,
-        borderRadius: 2,
-        backgroundColor: "#999",
+        borderRadius: radii.full,
+        backgroundColor: colors.text,
     },
     menuOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
+        backgroundColor: colors.overlay,
         justifyContent: "flex-end",
         paddingBottom: 30,
     },
     menuContainer: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
+        backgroundColor: colors.background,
+        borderRadius: radii.md,
         marginHorizontal: 16,
     },
     menuItem: {
         paddingVertical: 16,
         alignItems: "center",
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#f0f0f0",
+        borderBottomColor: colors.border,
     },
     menuItemText: {
         fontSize: 17,
-        color: "#e74c3c",
+        color: colors.danger,
     },
     menuCancel: {
         paddingVertical: 16,
@@ -81,7 +82,7 @@ export const styles = StyleSheet.create({
     },
     menuCancelText: {
         fontSize: 17,
-        color: "#208AEF",
+        color: colors.primary,
         fontWeight: "600",
     },
 });
