@@ -15,7 +15,7 @@ import { NavigationBar } from "expo-navigation-bar";
 import { router } from "expo-router";
 import { CaretLeft, CaretDown, Check } from "phosphor-react-native";
 import { useNotes } from "@/contexts/NotesContext";
-import { styles } from "./new-note.styles";
+import { styles } from "@/styles/new-note.styles";
 
 const FALLBACK_COLOR = "#999";
 

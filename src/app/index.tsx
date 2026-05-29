@@ -23,11 +23,11 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
 import { router } from "expo-router";
-import type { Note } from "@/services/notes";
-import { List, Plus, X } from "phosphor-react-native";
+import { ListIcon, PlusIcon } from "phosphor-react-native";
+import { NoteCard } from "@/components/NoteCard";
 import { COLLECTION_COLORS } from "@/services/collectionColors";
 import { Sidebar } from "@/components/Sidebar";
-import { styles } from "./index.styles";
+import { styles } from "@/styles/index.styles";
 
 const BASE_BG = "#fff";
 const FALLBACK_COLOR = "#999";
@@ -111,17 +111,7 @@ export default function Index() {
 
     const selectedCollectionName = selectedCollectionId
         ? (collections.find((c) => c.id === selectedCollectionId)?.name ?? "")
-        : "All Notes";
-    const handleDeleteNote = (note: Note) => {
-        Alert.alert("Delete note", `Delete "${note.title}"?`, [
-            { text: "Cancel", style: "cancel" },
-            {
-                text: "Delete",
-                style: "destructive",
-                onPress: () => removeNote(note.id),
-            },
-        ]);
-    };
+        : "All notes";
 
     const handleMenuAction = (action: "profile" | "signOut") => {
         setMenuVisible(false);
@@ -172,27 +162,6 @@ export default function Index() {
             ],
         );
     };
-
-    const renderNote = ({ item }: { item: Note }) => (
-        <View style={styles.noteCard}>
-            <View style={styles.noteHeader}>
-                <Text style={styles.noteTitle} numberOfLines={1}>
-                    {item.title}
-                </Text>
-                <TouchableOpacity
-                    onPress={() => handleDeleteNote(item)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                    <X size={16} color="#e74c3c" weight="bold" />
-                </TouchableOpacity>
-            </View>
-            {item.content ? (
-                <Text style={styles.noteContent} numberOfLines={3}>
-                    {item.content}
-                </Text>
-            ) : null}
-        </View>
-    );
 
     return (
         <View style={styles.container}>
@@ -246,7 +215,7 @@ export default function Index() {
                                 onPress={openSidebar}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <List size={22} color="#333" />
+                                <ListIcon size={22} color="#333" />
                             </TouchableOpacity>
                             <Image
                                 source={require("@/assets/mini-note-logo.png")}
@@ -273,7 +242,7 @@ export default function Index() {
                         <FlatList
                             data={notes}
                             keyExtractor={(item) => item.id}
-                            renderItem={renderNote}
+                            renderItem={({ item }) => <NoteCard note={item} />}
                             style={styles.list}
                             contentContainerStyle={styles.listContent}
                             ListEmptyComponent={
@@ -295,7 +264,7 @@ export default function Index() {
                             style={styles.fab}
                             onPress={() => router.push("/new-note")}
                         >
-                            <Plus size={28} color="#fff" weight="bold" />
+                            <PlusIcon size={28} color="#fff" weight="bold" />
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
 
