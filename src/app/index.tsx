@@ -12,11 +12,14 @@ import {
     Alert,
     Modal,
     Pressable,
+    Animated,
+    Dimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationBar } from "expo-navigation-bar";
 import * as SystemUI from "expo-system-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BlurView, BlurTargetView } from "expo-blur";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
@@ -26,16 +29,54 @@ const BASE_BG = "#fff";
 
 export default function Index() {
     const { user, isLoading: authLoading, signIn, signOut } = useAuth();
-    const { notes, isLoading: notesLoading, addNote, removeNote } = useNotes();
+    const {
+        notes,
+        isLoading: notesLoading,
+        collections,
+        selectedCollectionId,
+        selectCollection,
+        addNote,
+        removeNote,
+        addCollection,
+        editCollection,
+        removeCollection,
+    } = useNotes();
+
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
-    const avatarRef = useRef<View>(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [noteCollectionId, setNoteCollectionId] = useState<string | null>(null);
+    const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+    const sidebarAnim = useRef(new Animated.Value(0)).current;
+    const blurTargetRef = useRef<View>(null);
+
+    const openSidebar = () => {
+        setSidebarOpen(true);
+        Animated.timing(sidebarAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: false,
+        }).start();
+    };
+
+    const closeSidebar = () => {
+        Animated.timing(sidebarAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: false,
+        }).start(() => setSidebarOpen(false));
+    };
 
     useEffect(() => {
         SystemUI.setBackgroundColorAsync(BASE_BG);
     }, []);
+
+    // Sync note collection picker with selected collection
+    useEffect(() => {
+        setNoteCollectionId(selectedCollectionId);
+    }, [selectedCollectionId]);
 
     if (authLoading) {
         return (
@@ -59,6 +100,10 @@ export default function Index() {
         );
     }
 
+    const selectedCollectionName = selectedCollectionId
+        ? (collections.find((c) => c.id === selectedCollectionId)?.name ?? "")
+        : "All Notes";
+
     const handleAddNote = async () => {
         const trimmedTitle = title.trim();
         const trimmedContent = content.trim();
@@ -70,7 +115,7 @@ export default function Index() {
 
         setIsSaving(true);
         try {
-            await addNote(trimmedTitle || "Untitled", trimmedContent || "");
+            await addNote(trimmedTitle || "Untitled", trimmedContent || "", noteCollectionId);
             setTitle("");
             setContent("");
         } catch (error) {
@@ -101,6 +146,81 @@ export default function Index() {
         }
     };
 
+    const handleAddCollection = () => {
+        Alert.prompt
+            ? Alert.prompt("New Collection", "Enter a name:", [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                      text: "Create",
+                      onPress: (name?: string) => {
+                          if (name?.trim()) addCollection(name.trim());
+                      },
+                  },
+              ])
+            : (() => {
+                  // Fallback for Android: simple prompt via state
+                  let name = "";
+                  Alert.alert("New Collection", "Enter collection name", [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                          text: "Create",
+                          onPress: () => {
+                              const trimmed = promptValueRef.current?.trim();
+                              if (trimmed) addCollection(trimmed);
+                          },
+                      },
+                  ]);
+              })();
+    };
+
+    const handleRenameCollection = (collectionId: string, currentName: string) => {
+        Alert.prompt
+            ? Alert.prompt(
+                  "Rename Collection",
+                  "Enter new name:",
+                  [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                          text: "Rename",
+                          onPress: (name?: string) => {
+                              if (name?.trim()) {
+                                  editCollection(collectionId, name.trim());
+                              }
+                          },
+                      },
+                  ],
+                  "plain-text",
+                  currentName,
+              )
+            : Alert.alert("Rename Collection", `Enter new name for "${currentName}"`, [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                      text: "Rename",
+                      onPress: () => {
+                          const trimmed = promptValueRef.current?.trim();
+                          if (trimmed) {
+                              editCollection(collectionId, trimmed);
+                          }
+                      },
+                  },
+              ]);
+    };
+
+    const handleDeleteCollection = (collectionId: string, name: string) => {
+        Alert.alert(
+            "Delete Collection",
+            `Delete "${name}"? Notes in it will move to "All Notes".`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => removeCollection(collectionId),
+                },
+            ],
+        );
+    };
+
     const renderNote = ({ item }: { item: Note }) => (
         <View style={styles.noteCard}>
             <View style={styles.noteHeader}>
@@ -123,118 +243,320 @@ export default function Index() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-            <StatusBar style="dark" />
-            <NavigationBar style="dark" />
-            <KeyboardAvoidingView
-                style={styles.inner}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-                keyboardVerticalOffset={0}
-            >
-                {/* Single header bar */}
-                <View style={styles.headerBar}>
-                    <Text style={styles.appName}>Mini Note</Text>
-                    <TouchableOpacity onPress={() => setMenuVisible(true)} ref={avatarRef as any}>
-                        {user.photo ? (
-                            <Image source={{ uri: user.photo }} style={styles.avatar} />
-                        ) : (
-                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                                <Text style={styles.avatarText}>
-                                    {user.name?.charAt(0) ?? user.email.charAt(0)}
-                                </Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
-                </View>
+        <View style={styles.container}>
+            <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+                <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+                    <StatusBar style="dark" />
+                    <NavigationBar style="dark" />
 
-                {/* Contextual menu modal */}
-                <Modal
-                    visible={menuVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setMenuVisible(false)}
-                >
-                    <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
-                        <View style={styles.menuContainer}>
-                            <View style={styles.menuHeader}>
+                    {/* Contextual menu modal */}
+                    <Modal
+                        visible={menuVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setMenuVisible(false)}
+                    >
+                        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+                            <View style={styles.menuContainer}>
+                                <View style={styles.menuHeader}>
+                                    {user.photo ? (
+                                        <Image
+                                            source={{ uri: user.photo }}
+                                            style={styles.menuAvatar}
+                                        />
+                                    ) : (
+                                        <View style={[styles.menuAvatar, styles.avatarPlaceholder]}>
+                                            <Text style={styles.menuAvatarText}>
+                                                {user.name?.charAt(0) ?? user.email.charAt(0)}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <View style={styles.menuInfo}>
+                                        <Text style={styles.menuName}>{user.name ?? "User"}</Text>
+                                        <Text style={styles.menuEmail}>{user.email}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.menuDivider} />
+                                <TouchableOpacity
+                                    style={styles.menuItem}
+                                    onPress={() => handleMenuAction("profile")}
+                                >
+                                    <Text style={styles.menuItemText}>Profile</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.menuItem}
+                                    onPress={() => handleMenuAction("signOut")}
+                                >
+                                    <Text style={styles.menuItemTextDanger}>Sign Out</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </Pressable>
+                    </Modal>
+
+                    <KeyboardAvoidingView
+                        style={styles.inner}
+                        behavior={Platform.OS === "ios" ? "padding" : undefined}
+                        keyboardVerticalOffset={0}
+                    >
+                        {/* Header bar */}
+                        <View style={styles.headerBar}>
+                            <TouchableOpacity
+                                onPress={openSidebar}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Text style={styles.hamburger}>☰</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.appName} numberOfLines={1}>
+                                {selectedCollectionName}
+                            </Text>
+                            <TouchableOpacity onPress={() => setMenuVisible(true)}>
                                 {user.photo ? (
-                                    <Image source={{ uri: user.photo }} style={styles.menuAvatar} />
+                                    <Image source={{ uri: user.photo }} style={styles.avatar} />
                                 ) : (
-                                    <View style={[styles.menuAvatar, styles.avatarPlaceholder]}>
-                                        <Text style={styles.menuAvatarText}>
+                                    <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                                        <Text style={styles.avatarText}>
                                             {user.name?.charAt(0) ?? user.email.charAt(0)}
                                         </Text>
                                     </View>
                                 )}
-                                <View style={styles.menuInfo}>
-                                    <Text style={styles.menuName}>{user.name ?? "User"}</Text>
-                                    <Text style={styles.menuEmail}>{user.email}</Text>
-                                </View>
-                            </View>
-                            <View style={styles.menuDivider} />
-                            <TouchableOpacity
-                                style={styles.menuItem}
-                                onPress={() => handleMenuAction("profile")}
-                            >
-                                <Text style={styles.menuItemText}>Profile</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.menuItem}
-                                onPress={() => handleMenuAction("signOut")}
-                            >
-                                <Text style={styles.menuItemTextDanger}>Sign Out</Text>
                             </TouchableOpacity>
                         </View>
-                    </Pressable>
-                </Modal>
 
-                {/* Notes list */}
-                <FlatList
-                    data={notes}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderNote}
-                    style={styles.list}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={
-                        notesLoading ? (
-                            <ActivityIndicator size="large" color="#208AEF" style={styles.loader} />
-                        ) : (
-                            <Text style={styles.emptyText}>No notes yet. Create one below!</Text>
-                        )
-                    }
-                />
+                        {/* Notes list */}
+                        <FlatList
+                            data={notes}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderNote}
+                            style={styles.list}
+                            contentContainerStyle={styles.listContent}
+                            ListEmptyComponent={
+                                notesLoading ? (
+                                    <ActivityIndicator
+                                        size="large"
+                                        color="#208AEF"
+                                        style={styles.loader}
+                                    />
+                                ) : (
+                                    <Text style={styles.emptyText}>
+                                        No notes yet. Create one below!
+                                    </Text>
+                                )
+                            }
+                        />
 
-                {/* Add note form */}
-                <View style={styles.form}>
-                    <TextInput
-                        style={styles.titleInput}
-                        placeholder="Note title"
-                        placeholderTextColor="#999"
-                        value={title}
-                        onChangeText={setTitle}
-                    />
-                    <TextInput
-                        style={styles.contentInput}
-                        placeholder="Write something..."
-                        placeholderTextColor="#999"
-                        value={content}
-                        onChangeText={setContent}
-                        multiline
-                    />
-                    <TouchableOpacity
-                        style={[styles.addButton, isSaving && styles.addButtonDisabled]}
-                        onPress={handleAddNote}
-                        disabled={isSaving}
+                        {/* Add note form */}
+                        <View style={styles.form}>
+                            <View style={styles.formRow}>
+                                <TextInput
+                                    style={styles.titleInput}
+                                    placeholder="Note title"
+                                    placeholderTextColor="#999"
+                                    value={title}
+                                    onChangeText={setTitle}
+                                />
+                                <TouchableOpacity
+                                    style={styles.collectionPicker}
+                                    onPress={() => setCollectionPickerOpen(true)}
+                                >
+                                    <Text style={styles.collectionPickerText}>
+                                        {noteCollectionId
+                                            ? (collections.find((c) => c.id === noteCollectionId)
+                                                  ?.name ?? "…")
+                                            : "None"}
+                                    </Text>
+                                    <Text style={styles.collectionPickerArrow}>▾</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <TextInput
+                                style={styles.contentInput}
+                                placeholder="Write something..."
+                                placeholderTextColor="#999"
+                                value={content}
+                                onChangeText={setContent}
+                                multiline
+                            />
+                            <TouchableOpacity
+                                style={[styles.addButton, isSaving && styles.addButtonDisabled]}
+                                onPress={handleAddNote}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={styles.addButtonText}>Save Note</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </KeyboardAvoidingView>
+
+                    {/* Collection picker modal */}
+                    <Modal
+                        visible={collectionPickerOpen}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setCollectionPickerOpen(false)}
                     >
-                        {isSaving ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                            <Text style={styles.addButtonText}>Save Note</Text>
-                        )}
-                    </TouchableOpacity>
+                        <Pressable
+                            style={styles.pickerOverlay}
+                            onPress={() => setCollectionPickerOpen(false)}
+                        >
+                            <View style={styles.pickerContainer}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.pickerItem,
+                                        !noteCollectionId && styles.pickerItemActive,
+                                    ]}
+                                    onPress={() => {
+                                        setNoteCollectionId(null);
+                                        setCollectionPickerOpen(false);
+                                    }}
+                                >
+                                    <Text style={styles.pickerItemText}>None</Text>
+                                </TouchableOpacity>
+                                {collections.map((c) => (
+                                    <TouchableOpacity
+                                        key={c.id}
+                                        style={[
+                                            styles.pickerItem,
+                                            noteCollectionId === c.id && styles.pickerItemActive,
+                                        ]}
+                                        onPress={() => {
+                                            setNoteCollectionId(c.id);
+                                            setCollectionPickerOpen(false);
+                                        }}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.pickerItemText,
+                                                noteCollectionId === c.id &&
+                                                    styles.pickerItemTextActive,
+                                            ]}
+                                        >
+                                            {c.name}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </Pressable>
+                    </Modal>
+                </SafeAreaView>
+            </BlurTargetView>
+
+            {/* Sidebar overlay */}
+            {sidebarOpen && (
+                <View style={styles.sidebarOverlay}>
+                    <Animated.View
+                        style={[
+                            styles.sidebarBackdrop,
+                            {
+                                opacity: sidebarAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, 1],
+                                }),
+                            },
+                        ]}
+                    >
+                        <BlurView
+                            blurTarget={blurTargetRef}
+                            blurMethod="dimezisBlurViewSdk31Plus"
+                            intensity={50}
+                            tint="dark"
+                            style={{ flex: 1 }}
+                        >
+                            <Pressable style={{ flex: 1 }} onPress={closeSidebar} />
+                        </BlurView>
+                    </Animated.View>
+                    <Animated.View
+                        style={[
+                            styles.sidebar,
+                            {
+                                left: sidebarAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [-320, 0],
+                                }),
+                            },
+                        ]}
+                    >
+                        <View style={styles.sidebarHeader}>
+                            <Text style={styles.sidebarTitle}>Collections</Text>
+                            <TouchableOpacity
+                                onPress={handleAddCollection}
+                                hitSlop={{
+                                    top: 8,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                }}
+                            >
+                                <Text style={styles.sidebarAddButton}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.sidebarItem,
+                                !selectedCollectionId && styles.sidebarItemActive,
+                            ]}
+                            onPress={() => {
+                                selectCollection(null);
+                                closeSidebar();
+                            }}
+                        >
+                            <Text
+                                style={[
+                                    styles.sidebarItemText,
+                                    !selectedCollectionId && styles.sidebarItemTextActive,
+                                ]}
+                            >
+                                All Notes
+                            </Text>
+                        </TouchableOpacity>
+
+                        {collections.map((c) => (
+                            <TouchableOpacity
+                                key={c.id}
+                                style={[
+                                    styles.sidebarItem,
+                                    selectedCollectionId === c.id && styles.sidebarItemActive,
+                                ]}
+                                onPress={() => {
+                                    selectCollection(c.id);
+                                    closeSidebar();
+                                }}
+                                onLongPress={() => {
+                                    Alert.alert(c.name, undefined, [
+                                        {
+                                            text: "Rename",
+                                            onPress: () => handleRenameCollection(c.id, c.name),
+                                        },
+                                        {
+                                            text: "Delete",
+                                            style: "destructive",
+                                            onPress: () => handleDeleteCollection(c.id, c.name),
+                                        },
+                                        {
+                                            text: "Cancel",
+                                            style: "cancel",
+                                        },
+                                    ]);
+                                }}
+                            >
+                                <Text
+                                    style={[
+                                        styles.sidebarItemText,
+                                        selectedCollectionId === c.id &&
+                                            styles.sidebarItemTextActive,
+                                    ]}
+                                    numberOfLines={1}
+                                >
+                                    {c.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </Animated.View>
                 </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            )}
+        </View>
     );
 }
 
@@ -274,20 +596,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
+    // Header bar
     headerBar: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: "#e0e0e0",
         backgroundColor: "#fff",
+        gap: 12,
+    },
+    hamburger: {
+        fontSize: 22,
+        color: "#333",
     },
     appName: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "700",
         color: "#208AEF",
+        flex: 1,
+        textAlign: "center",
     },
     avatar: {
         width: 32,
@@ -304,7 +634,60 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "700",
     },
-
+    // Sidebar
+    sidebarOverlay: {
+        ...StyleSheet.absoluteFill,
+        zIndex: 100,
+    },
+    sidebarBackdrop: {
+        ...StyleSheet.absoluteFill,
+    },
+    sidebar: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        bottom: 0,
+        width: 320,
+        backgroundColor: "#fff",
+        paddingTop: 60,
+        borderRightWidth: StyleSheet.hairlineWidth,
+        borderRightColor: "#e0e0e0",
+    },
+    sidebarHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    sidebarTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#333",
+    },
+    sidebarAddButton: {
+        fontSize: 24,
+        color: "#208AEF",
+        fontWeight: "600",
+    },
+    sidebarItem: {
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#f0f0f0",
+    },
+    sidebarItemActive: {
+        backgroundColor: "#e8f4fd",
+    },
+    sidebarItemText: {
+        fontSize: 15,
+        color: "#333",
+    },
+    sidebarItemTextActive: {
+        color: "#208AEF",
+        fontWeight: "600",
+    },
+    // Contextual menu
     menuOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.3)",
@@ -368,6 +751,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: "#e74c3c",
     },
+    // Notes list
     list: {
         flex: 1,
     },
@@ -413,6 +797,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
         lineHeight: 20,
     },
+    // Form
     form: {
         padding: 16,
         borderTopWidth: StyleSheet.hairlineWidth,
@@ -420,13 +805,36 @@ const styles = StyleSheet.create({
         gap: 10,
         backgroundColor: "#fff",
     },
+    formRow: {
+        flexDirection: "row",
+        gap: 8,
+    },
     titleInput: {
+        flex: 1,
         borderWidth: 1,
         borderColor: "#ddd",
         borderRadius: 8,
         padding: 10,
         fontSize: 16,
         color: "#333",
+    },
+    collectionPicker: {
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        gap: 4,
+    },
+    collectionPickerText: {
+        fontSize: 13,
+        color: "#555",
+        maxWidth: 70,
+    },
+    collectionPickerArrow: {
+        fontSize: 12,
+        color: "#999",
     },
     contentInput: {
         borderWidth: 1,
@@ -452,4 +860,42 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
+    // Collection picker
+    pickerOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.3)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    pickerContainer: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        width: 220,
+        maxHeight: 300,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    pickerItem: {
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#f0f0f0",
+    },
+    pickerItemActive: {
+        backgroundColor: "#e8f4fd",
+    },
+    pickerItemText: {
+        fontSize: 15,
+        color: "#333",
+    },
+    pickerItemTextActive: {
+        color: "#208AEF",
+        fontWeight: "600",
+    },
 });
+
+// Android Alert.prompt workaround
+const promptValueRef = { current: "" };
