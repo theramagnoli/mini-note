@@ -49,6 +49,12 @@ export default function Index() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [noteCollectionId, setNoteCollectionId] = useState<string | null>(null);
     const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+    const [promptVisible, setPromptVisible] = useState(false);
+    const [promptValue, setPromptValue] = useState("");
+    const [promptAction, setPromptAction] = useState<"create" | null>(null);
+    const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(
+        null,
+    );
     const sidebarAnim = useRef(new Animated.Value(0)).current;
     const blurTargetRef = useRef<View>(null);
 
@@ -147,63 +153,28 @@ export default function Index() {
     };
 
     const handleAddCollection = () => {
-        Alert.prompt
-            ? Alert.prompt("New Collection", "Enter a name:", [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                      text: "Create",
-                      onPress: (name?: string) => {
-                          if (name?.trim()) addCollection(name.trim());
-                      },
-                  },
-              ])
-            : (() => {
-                  // Fallback for Android: simple prompt via state
-                  let name = "";
-                  Alert.alert("New Collection", "Enter collection name", [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                          text: "Create",
-                          onPress: () => {
-                              const trimmed = promptValueRef.current?.trim();
-                              if (trimmed) addCollection(trimmed);
-                          },
-                      },
-                  ]);
-              })();
+        setEditingCollection(null);
+        setPromptValue("");
+        setPromptAction("create");
+        setPromptVisible(true);
     };
 
     const handleRenameCollection = (collectionId: string, currentName: string) => {
-        Alert.prompt
-            ? Alert.prompt(
-                  "Rename Collection",
-                  "Enter new name:",
-                  [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                          text: "Rename",
-                          onPress: (name?: string) => {
-                              if (name?.trim()) {
-                                  editCollection(collectionId, name.trim());
-                              }
-                          },
-                      },
-                  ],
-                  "plain-text",
-                  currentName,
-              )
-            : Alert.alert("Rename Collection", `Enter new name for "${currentName}"`, [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                      text: "Rename",
-                      onPress: () => {
-                          const trimmed = promptValueRef.current?.trim();
-                          if (trimmed) {
-                              editCollection(collectionId, trimmed);
-                          }
-                      },
-                  },
-              ]);
+        setEditingCollection({ id: collectionId, name: currentName });
+        setPromptValue(currentName);
+        setPromptAction(null);
+        setPromptVisible(true);
+    };
+
+    const handlePromptSubmit = () => {
+        const trimmed = promptValue.trim();
+        if (!trimmed) return;
+        setPromptVisible(false);
+        if (promptAction === "create") {
+            addCollection(trimmed);
+        } else if (editingCollection) {
+            editCollection(editingCollection.id, trimmed);
+        }
     };
 
     const handleDeleteCollection = (collectionId: string, name: string) => {
@@ -388,6 +359,50 @@ export default function Index() {
                             </TouchableOpacity>
                         </View>
                     </KeyboardAvoidingView>
+
+                    {/* Collection prompt modal */}
+                    <Modal
+                        visible={promptVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setPromptVisible(false)}
+                    >
+                        <Pressable
+                            style={styles.pickerOverlay}
+                            onPress={() => setPromptVisible(false)}
+                        >
+                            <View style={styles.promptContainer}>
+                                <Text style={styles.promptTitle}>
+                                    {editingCollection ? "Rename Collection" : "New Collection"}
+                                </Text>
+                                <TextInput
+                                    style={styles.promptInput}
+                                    placeholder="Collection name"
+                                    placeholderTextColor="#999"
+                                    value={promptValue}
+                                    onChangeText={setPromptValue}
+                                    autoFocus
+                                    onSubmitEditing={handlePromptSubmit}
+                                />
+                                <View style={styles.promptButtons}>
+                                    <TouchableOpacity
+                                        style={styles.promptCancel}
+                                        onPress={() => setPromptVisible(false)}
+                                    >
+                                        <Text style={styles.promptCancelText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.promptConfirm}
+                                        onPress={handlePromptSubmit}
+                                    >
+                                        <Text style={styles.promptConfirmText}>
+                                            {editingCollection ? "Rename" : "Create"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </Pressable>
+                    </Modal>
 
                     {/* Collection picker modal */}
                     <Modal
@@ -895,7 +910,55 @@ const styles = StyleSheet.create({
         color: "#208AEF",
         fontWeight: "600",
     },
+    // Prompt modal
+    promptContainer: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        width: 280,
+        padding: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    promptTitle: {
+        fontSize: 17,
+        fontWeight: "600",
+        color: "#333",
+        marginBottom: 14,
+    },
+    promptInput: {
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 8,
+        padding: 10,
+        fontSize: 15,
+        color: "#333",
+        marginBottom: 16,
+    },
+    promptButtons: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        gap: 10,
+    },
+    promptCancel: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+    },
+    promptCancelText: {
+        fontSize: 15,
+        color: "#666",
+    },
+    promptConfirm: {
+        backgroundColor: "#208AEF",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+    },
+    promptConfirmText: {
+        fontSize: 15,
+        color: "#fff",
+        fontWeight: "600",
+    },
 });
-
-// Android Alert.prompt workaround
-const promptValueRef = { current: "" };
