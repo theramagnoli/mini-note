@@ -39,9 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const handleSignIn = useCallback(async () => {
-        const signedInUser = await googleSignIn();
-        if (signedInUser) {
-            setUser(signedInUser);
+        try {
+            const signedInUser = await googleSignIn();
+            if (signedInUser) {
+                setUser(signedInUser);
+            }
+        } catch (error: any) {
+            console.error("Sign-in failed:", error);
+            alert(error?.message ?? "Sign-in failed. Please try again.");
         }
     }, []);
 
