@@ -11,7 +11,12 @@ interface NoteCardProps {
 export function NoteCard({ note }: NoteCardProps) {
     return (
         <TouchableOpacity style={styles.card} onPress={() => router.push(`/note/${note.id}`)}>
-            <NoteIcon size={22} color="#000" style={{ marginRight: 12, marginTop: 3 }} />
+            <NoteIcon
+                size={22}
+                color="#000"
+                weight="bold"
+                style={{ marginRight: 12, marginTop: 3 }}
+            />
             <View style={{ flex: 1 }}>
                 <Text style={styles.title} numberOfLines={1}>
                     {note.title}

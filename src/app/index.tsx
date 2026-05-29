@@ -209,7 +209,7 @@ export default function Index() {
                                 onPress={openSidebar}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <ListIcon size={22} color="#333" />
+                                <ListIcon size={22} color="#333" weight="bold" />
                             </TouchableOpacity>
                             <Image
                                 source={require("@/assets/mini-note-logo.png")}
