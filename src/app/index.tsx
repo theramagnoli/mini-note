@@ -25,8 +25,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotes } from "@/contexts/NotesContext";
 import { router } from "expo-router";
 import type { Note } from "@/services/notes";
+import { List, Plus, X, CaretDown } from "phosphor-react-native";
+import { COLLECTION_COLORS } from "@/services/collectionColors";
 
 const BASE_BG = "#fff";
+const FALLBACK_COLOR = "#999";
 const HEADER_HEIGHT = 56;
 const AVATAR_SIZE = 32;
 const H_PADDING = 16;
@@ -54,6 +57,7 @@ export default function Index() {
     const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(
         null,
     );
+    const [selectedColor, setSelectedColor] = useState(COLLECTION_COLORS[0]);
     const sidebarAnim = useRef(new Animated.Value(0)).current;
     const blurTargetRef = useRef<View>(null);
     const insets = useSafeAreaInsets();
@@ -130,6 +134,7 @@ export default function Index() {
     const handleAddCollection = () => {
         setEditingCollection(null);
         setPromptValue("");
+        setSelectedColor(COLLECTION_COLORS[0]);
         setPromptAction("create");
         setPromptVisible(true);
     };
@@ -146,7 +151,7 @@ export default function Index() {
         if (!trimmed) return;
         setPromptVisible(false);
         if (promptAction === "create") {
-            addCollection(trimmed);
+            addCollection(trimmed, selectedColor);
         } else if (editingCollection) {
             editCollection(editingCollection.id, trimmed);
         }
@@ -177,7 +182,7 @@ export default function Index() {
                     onPress={() => handleDeleteNote(item)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                    <Text style={styles.deleteButton}>✕</Text>
+                    <X size={16} color="#e74c3c" weight="bold" />
                 </TouchableOpacity>
             </View>
             {item.content ? (
@@ -240,7 +245,7 @@ export default function Index() {
                                 onPress={openSidebar}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Text style={styles.hamburger}>☰</Text>
+                                <List size={22} color="#333" />
                             </TouchableOpacity>
                             <Text style={styles.appName} numberOfLines={1}>
                                 {selectedCollectionName}
@@ -284,7 +289,7 @@ export default function Index() {
                             style={styles.fab}
                             onPress={() => router.push("/new-note")}
                         >
-                            <Text style={styles.fabText}>+</Text>
+                            <Plus size={28} color="#fff" weight="bold" />
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
 
@@ -312,6 +317,22 @@ export default function Index() {
                                     autoFocus
                                     onSubmitEditing={handlePromptSubmit}
                                 />
+                                {promptAction === "create" && (
+                                    <View style={styles.colorRow}>
+                                        {COLLECTION_COLORS.map((color) => (
+                                            <TouchableOpacity
+                                                key={color}
+                                                style={[
+                                                    styles.colorDot,
+                                                    { backgroundColor: color },
+                                                    selectedColor === color &&
+                                                        styles.colorDotSelected,
+                                                ]}
+                                                onPress={() => setSelectedColor(color)}
+                                            />
+                                        ))}
+                                    </View>
+                                )}
                                 <View style={styles.promptButtons}>
                                     <TouchableOpacity
                                         style={styles.promptCancel}
@@ -380,7 +401,7 @@ export default function Index() {
                                     right: 8,
                                 }}
                             >
-                                <Text style={styles.sidebarAddButton}>+</Text>
+                                <Plus size={22} color="#208AEF" weight="bold" />
                             </TouchableOpacity>
                         </View>
 
@@ -394,6 +415,14 @@ export default function Index() {
                                 closeSidebar();
                             }}
                         >
+                            <View
+                                style={[
+                                    styles.dot,
+                                    {
+                                        backgroundColor: "#ccc",
+                                    },
+                                ]}
+                            />
                             <Text
                                 style={[
                                     styles.sidebarItemText,
@@ -433,6 +462,14 @@ export default function Index() {
                                     ]);
                                 }}
                             >
+                                <View
+                                    style={[
+                                        styles.dot,
+                                        {
+                                            backgroundColor: c.color || FALLBACK_COLOR,
+                                        },
+                                    ]}
+                                />
                                 <Text
                                     style={[
                                         styles.sidebarItemText,
@@ -567,9 +604,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: "#f0f0f0",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
     },
     sidebarItemActive: {
         backgroundColor: "#e8f4fd",
+        borderRadius: 8,
+    },
+    dot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
     },
     sidebarItemText: {
         fontSize: 15,
@@ -824,5 +870,19 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: "#fff",
         fontWeight: "600",
+    },
+    colorRow: {
+        flexDirection: "row",
+        gap: 10,
+        marginBottom: 16,
+    },
+    colorDot: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+    },
+    colorDotSelected: {
+        borderWidth: 3,
+        borderColor: "#333",
     },
 });

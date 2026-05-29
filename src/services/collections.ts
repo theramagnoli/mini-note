@@ -13,21 +13,28 @@ import {
     type Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import type { CollectionColor } from "./collectionColors";
 
 export interface NoteCollection {
     id: string;
     name: string;
     userId: string;
+    color: CollectionColor;
     createdAt: Timestamp | null;
 }
 
 const COLLECTIONS_PATH = "collections";
 const NOTES_PATH = "notes";
 
-export async function createCollection(userId: string, name: string): Promise<string> {
+export async function createCollection(
+    userId: string,
+    name: string,
+    color: CollectionColor,
+): Promise<string> {
     const docRef = await addDoc(collection(db, COLLECTIONS_PATH), {
         userId,
         name,
+        color,
         createdAt: serverTimestamp(),
     });
     return docRef.id;

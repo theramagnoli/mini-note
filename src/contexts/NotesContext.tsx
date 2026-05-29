@@ -7,6 +7,7 @@ import {
     subscribeToCollections,
     type NoteCollection,
 } from "@/services/collections";
+import type { CollectionColor } from "@/services/collectionColors";
 import { useAuth } from "./AuthContext";
 
 interface NotesContextValue {
@@ -18,7 +19,7 @@ interface NotesContextValue {
     addNote: (title: string, content: string, collectionId?: string | null) => Promise<void>;
     editNote: (noteId: string, title: string, content: string) => Promise<void>;
     removeNote: (noteId: string) => Promise<void>;
-    addCollection: (name: string) => Promise<void>;
+    addCollection: (name: string, color: CollectionColor) => Promise<void>;
     editCollection: (collectionId: string, name: string) => Promise<void>;
     removeCollection: (collectionId: string) => Promise<void>;
 }
@@ -95,9 +96,9 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const addCollection = useCallback(
-        async (name: string) => {
+        async (name: string, color: CollectionColor) => {
             if (!user) return;
-            await createCollection(user.id, name);
+            await createCollection(user.id, name, color);
         },
         [user],
     );
